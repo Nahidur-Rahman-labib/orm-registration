@@ -18,11 +18,13 @@ public class ClientDetailsServiceImpl implements ClientDetailsService {
     private final ClientDetailsRepository clientDetailsRepository;
     private final ClientRepository clientRepository;
 
+
     public ClientDetailsServiceImpl(ClientDetailsRepository clientDetailsRepository,
                                     ClientRepository clientRepository) {
         this.clientDetailsRepository = clientDetailsRepository;
         this.clientRepository = clientRepository;
     }
+
 
     @Override
     @Transactional
@@ -51,8 +53,13 @@ public class ClientDetailsServiceImpl implements ClientDetailsService {
     @Override
     @Transactional(readOnly = true)
     public ClientDetailsResponse getClientDetailsByClientId(Long clientId) {
-        ClientDetails details = clientDetailsRepository.findById(clientId)
-                .orElseThrow(() -> new RuntimeException("Client details not found with client ID: " + clientId));
+        ClientDetails details = clientDetailsRepository.findByClient_ClientId(clientId)
+                .orElse(null); // return null if missing
+
+        if (details == null) {
+            // return empty response instead of throwing 500
+            return new ClientDetailsResponse();
+        }
 
         return mapToResponse(details);
     }
