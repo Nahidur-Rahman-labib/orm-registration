@@ -49,9 +49,12 @@ public class AccountServiceImpl implements AccountService {
         account.setId(id);
         account.setClient(client);
         account.setAccountTitle(request.getAccountTitle());
-        account.setAccountOpenDt(request.getAccountOpenDt());
-        account.setEffectiveDt(request.getEffectiveDt());
-        account.setExpiryDt(request.getExpiryDt());
+
+        if (request.getAccountOpenDt() != null) account.setAccountOpenDt(request.getAccountOpenDt());
+        if (request.getEffectiveDt() != null) account.setEffectiveDt(request.getEffectiveDt());
+        if (request.getExpiryDt() != null) account.setExpiryDt(request.getExpiryDt());
+
+
         account.setLimitAmt(request.getLimitAmt());
         account.setEntityId(request.getEntityId() != null ? request.getEntityId() : "C");
         account.setApproveFlag(0);
@@ -74,16 +77,17 @@ public class AccountServiceImpl implements AccountService {
         Account account = accountRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Account not found"));
 
-        // Update fields safely
-        if (request.getAccountTitle() != null) account.setAccountTitle(request.getAccountTitle());
+        account.setAccountTitle(request.getAccountTitle());
+
+        // Update only if request values exist
         if (request.getAccountOpenDt() != null) account.setAccountOpenDt(request.getAccountOpenDt());
         if (request.getEffectiveDt() != null) account.setEffectiveDt(request.getEffectiveDt());
         if (request.getExpiryDt() != null) account.setExpiryDt(request.getExpiryDt());
-        if (request.getLimitAmt() != null) account.setLimitAmt(request.getLimitAmt());
-        if (request.getEntityId() != null && !request.getEntityId().isEmpty()) account.setEntityId(request.getEntityId());
-        if (request.getAccountType() != null && !request.getAccountType().isEmpty()) account.setAccountType(request.getAccountType());
 
-        account.setRecordDt(new Date()); // update record timestamp
+        account.setLimitAmt(request.getLimitAmt());
+        account.setEntityId(request.getEntityId() != null ? request.getEntityId() : account.getEntityId());
+        account.setAccountType(request.getAccountType());
+        account.setRecordDt(new Date());
 
         Account updated = accountRepository.save(account);
         return mapToResponse(updated);

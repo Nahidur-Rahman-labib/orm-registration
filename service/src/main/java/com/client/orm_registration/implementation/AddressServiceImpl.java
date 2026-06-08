@@ -128,11 +128,28 @@ public class AddressServiceImpl implements AddressService {
         AddressResponse response = new AddressResponse();
         response.setAddressId(address.getAddressId());
         response.setAddress(address.getAddress());
-        response.setAddressTypeId(address.getAddressType() != null ? address.getAddressType().getAddrTypeId() : null);
-        response.setCountryId(address.getCountry() != null ? address.getCountry().getCountryId() : null);
-        response.setDivisionId(address.getDivision() != null ? address.getDivision().getDivisionId() : null);
-        response.setDistrictId(address.getDistrict() != null ? address.getDistrict().getDistrictId() : null);
-        response.setThanaId(address.getThana() != null ? address.getThana().getThanaId() : null);
+
+        if (address.getAddressType() != null) {
+            response.setAddressTypeId(address.getAddressType().getAddrTypeId());
+            response.setAddressTypeName(address.getAddressType().getAddrTypeNm()); // ADD
+        }
+        if (address.getCountry() != null) {
+            response.setCountryId(address.getCountry().getCountryId());
+            response.setCountryName(address.getCountry().getCountryName());         // ADD
+        }
+        if (address.getDivision() != null) {
+            response.setDivisionId(address.getDivision().getDivisionId());
+            response.setDivisionName(address.getDivision().getDivisionName());       // ADD
+        }
+        if (address.getDistrict() != null) {
+            response.setDistrictId(address.getDistrict().getDistrictId());
+            response.setDistrictName(address.getDistrict().getDistrictName());       // ADD
+        }
+        if (address.getThana() != null) {
+            response.setThanaId(address.getThana().getThanaId());
+            response.setThanaName(address.getThana().getThanaName());                 // ADD
+        }
+
         response.setCity(address.getCity());
         response.setZipCode(address.getZipCode());
         response.setMobileNo(address.getMobileNo());
