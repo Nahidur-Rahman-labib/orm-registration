@@ -37,7 +37,12 @@ public class AccountServiceImpl implements AccountService {
         id.setClAccSl(request.getClAccSl());
 
         if (accountRepository.existsById(id)) {
-            throw new RuntimeException("Account already exists");
+            Account existing = accountRepository.findById(id).get();
+            // update existing instead of throwing
+            existing.setAccountTitle(request.getAccountTitle());
+            existing.setLimitAmt(request.getLimitAmt());
+            accountRepository.save(existing);
+            return mapToResponse(existing);
         }
 
         Account account = new Account();
@@ -52,6 +57,7 @@ public class AccountServiceImpl implements AccountService {
         account.setApproveFlag(0);
         account.setRecordUserId("SYSTEM");
         account.setRecordDt(new Date());
+        account.setAccountType(request.getAccountType());
 
         Account saved = accountRepository.save(account);
 
@@ -68,13 +74,16 @@ public class AccountServiceImpl implements AccountService {
         Account account = accountRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Account not found"));
 
-        account.setAccountTitle(request.getAccountTitle());
-        account.setAccountOpenDt(request.getAccountOpenDt());
-        account.setEffectiveDt(request.getEffectiveDt());
-        account.setExpiryDt(request.getExpiryDt());
-        account.setLimitAmt(request.getLimitAmt());
-        account.setEntityId(request.getEntityId() != null ? request.getEntityId() : account.getEntityId());
-        account.setRecordDt(new Date());
+        // Update fields safely
+        if (request.getAccountTitle() != null) account.setAccountTitle(request.getAccountTitle());
+        if (request.getAccountOpenDt() != null) account.setAccountOpenDt(request.getAccountOpenDt());
+        if (request.getEffectiveDt() != null) account.setEffectiveDt(request.getEffectiveDt());
+        if (request.getExpiryDt() != null) account.setExpiryDt(request.getExpiryDt());
+        if (request.getLimitAmt() != null) account.setLimitAmt(request.getLimitAmt());
+        if (request.getEntityId() != null && !request.getEntityId().isEmpty()) account.setEntityId(request.getEntityId());
+        if (request.getAccountType() != null && !request.getAccountType().isEmpty()) account.setAccountType(request.getAccountType());
+
+        account.setRecordDt(new Date()); // update record timestamp
 
         Account updated = accountRepository.save(account);
         return mapToResponse(updated);
@@ -115,6 +124,7 @@ public class AccountServiceImpl implements AccountService {
         response.setExpiryDt(account.getExpiryDt());
         response.setLimitAmt(account.getLimitAmt());
         response.setEntityId(account.getEntityId());
+        response.setAccountType(account.getAccountType());
         return response;
     }
 }

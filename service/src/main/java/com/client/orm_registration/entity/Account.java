@@ -46,6 +46,8 @@ public class Account {
 
     @Column(name = "RECORD_USER_ID")
     private String recordUserId;
+    @Column(name = "ACCOUNTTYPE")
+    private String accountType;
 
     @Column(name = "RECORD_DT")
     private Date recordDt;

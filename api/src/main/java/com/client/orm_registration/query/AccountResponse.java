@@ -23,4 +23,5 @@ public class AccountResponse {
     private Date expiryDt;
     private BigDecimal limitAmt;
     private String entityId;
+    private String accountType;
 }
