@@ -3,10 +3,13 @@ package com.client.orm_registration.controller;
 import com.client.orm_registration.contract.ClientService;
 import com.client.orm_registration.command.CreateClientRequest;
 import com.client.orm_registration.query.GetClientResponse;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/clients")
@@ -19,8 +22,19 @@ public class ClientController {
     }
 
     @PostMapping
-    public ResponseEntity<GetClientResponse> createClient(@RequestBody CreateClientRequest request) {
-        return ResponseEntity.ok(clientService.createClient(request));
+    public ResponseEntity<?> createClient(@Valid @RequestBody CreateClientRequest request,
+                                          BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            return ResponseEntity.badRequest()
+                    .body(bindingResult.getAllErrors()
+                            .stream()
+                            .map(err -> err.getDefaultMessage())
+                            .collect(Collectors.toList()));
+        }
+
+        // Save client if valid
+        GetClientResponse response = clientService.createClient(request);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
