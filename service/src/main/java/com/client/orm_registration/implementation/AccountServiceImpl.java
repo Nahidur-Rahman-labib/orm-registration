@@ -2,6 +2,7 @@ package com.client.orm_registration.implementation;
 
 import com.client.orm_registration.contract.AccountService;
 import com.client.orm_registration.command.AccountRequest;
+import com.client.orm_registration.mapper.AccountMapper;
 import com.client.orm_registration.query.AccountResponse;
 import com.client.orm_registration.entity.Account;
 import com.client.orm_registration.entity.AccountId;
@@ -19,57 +20,44 @@ public class AccountServiceImpl implements AccountService {
 
     private final AccountRepository accountRepository;
     private final ClientRepository clientRepository;
+    private final AccountMapper accountMapper;
 
     public AccountServiceImpl(AccountRepository accountRepository,
-                              ClientRepository clientRepository) {
+                              ClientRepository clientRepository,
+                              AccountMapper accountMapper) {
         this.accountRepository = accountRepository;
         this.clientRepository = clientRepository;
+        this.accountMapper = accountMapper;
     }
 
     @Override
     @Transactional
     public AccountResponse addAccount(Long clientId, AccountRequest request) {
-        Client client = clientRepository.findById(request.getClientId())
+
+        Client client = clientRepository.findById(clientId)
                 .orElseThrow(() -> new RuntimeException("Client not found"));
 
-        AccountId id = new AccountId();
-        id.setOfficeId(request.getOfficeId());
-        id.setClAccSl(request.getClAccSl());
+        AccountId id = accountMapper.toId(request);
 
         if (accountRepository.existsById(id)) {
-            Account existing = accountRepository.findById(id).get();
-            // update existing instead of throwing
-            existing.setAccountTitle(request.getAccountTitle());
-            existing.setLimitAmt(request.getLimitAmt());
-            accountRepository.save(existing);
-            return mapToResponse(existing);
+
+            Account existing = accountRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Account not found"));
+
+            accountMapper.updateEntity(existing, request);
+
+            return accountMapper.toResponse(accountRepository.save(existing));
         }
 
-        Account account = new Account();
-        account.setId(id);
-        account.setClient(client);
-        account.setAccountTitle(request.getAccountTitle());
+        Account account = accountMapper.toEntity(request, client);
 
-        if (request.getAccountOpenDt() != null) account.setAccountOpenDt(request.getAccountOpenDt());
-        if (request.getEffectiveDt() != null) account.setEffectiveDt(request.getEffectiveDt());
-        if (request.getExpiryDt() != null) account.setExpiryDt(request.getExpiryDt());
-
-
-        account.setLimitAmt(request.getLimitAmt());
-        account.setEntityId(request.getEntityId() != null ? request.getEntityId() : "C");
-        account.setApproveFlag(0);
-        account.setRecordUserId("SYSTEM");
-        account.setRecordDt(new Date());
-        account.setAccountType(request.getAccountType());
-
-        Account saved = accountRepository.save(account);
-
-        return mapToResponse(saved);
+        return accountMapper.toResponse(accountRepository.save(account));
     }
 
     @Override
     @Transactional
     public AccountResponse updateAccount(Integer officeId, Integer clAccSl, AccountRequest request) {
+
         AccountId id = new AccountId();
         id.setOfficeId(officeId);
         id.setClAccSl(clAccSl);
@@ -77,25 +65,15 @@ public class AccountServiceImpl implements AccountService {
         Account account = accountRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Account not found"));
 
-        account.setAccountTitle(request.getAccountTitle());
+        accountMapper.updateEntity(account, request);
 
-        // Update only if request values exist
-        if (request.getAccountOpenDt() != null) account.setAccountOpenDt(request.getAccountOpenDt());
-        if (request.getEffectiveDt() != null) account.setEffectiveDt(request.getEffectiveDt());
-        if (request.getExpiryDt() != null) account.setExpiryDt(request.getExpiryDt());
-
-        account.setLimitAmt(request.getLimitAmt());
-        account.setEntityId(request.getEntityId() != null ? request.getEntityId() : account.getEntityId());
-        account.setAccountType(request.getAccountType());
-        account.setRecordDt(new Date());
-
-        Account updated = accountRepository.save(account);
-        return mapToResponse(updated);
+        return accountMapper.toResponse(accountRepository.save(account));
     }
 
     @Override
     @Transactional
     public void deleteAccount(Integer officeId, Integer clAccSl) {
+
         AccountId id = new AccountId();
         id.setOfficeId(officeId);
         id.setClAccSl(clAccSl);
@@ -110,25 +88,10 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @Transactional(readOnly = true)
     public List<AccountResponse> getAccountsByClientId(Long clientId) {
+
         return accountRepository.findByClientClientId(clientId)
                 .stream()
-                .map(this::mapToResponse)
+                .map(accountMapper::toResponse)
                 .toList();
-    }
-
-    private AccountResponse mapToResponse(Account account) {
-        AccountResponse response = new AccountResponse();
-        response.setOfficeId(account.getId().getOfficeId());
-        response.setClAccSl(account.getId().getClAccSl());
-        response.setAccountNo(account.getAccountNo());
-        response.setClientId(account.getClient() != null ? account.getClient().getClientId() : null);
-        response.setAccountTitle(account.getAccountTitle());
-        response.setAccountOpenDt(account.getAccountOpenDt());
-        response.setEffectiveDt(account.getEffectiveDt());
-        response.setExpiryDt(account.getExpiryDt());
-        response.setLimitAmt(account.getLimitAmt());
-        response.setEntityId(account.getEntityId());
-        response.setAccountType(account.getAccountType());
-        return response;
     }
 }
